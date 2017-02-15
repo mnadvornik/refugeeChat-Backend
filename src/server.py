@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import signal
 import subprocess
 from threading import Thread, Event
@@ -10,6 +11,8 @@ import config
 from logutils import setup_logger
 
 logger = setup_logger("boilerplate.server")
+
+MESSAGE_TYPE_XXX = "MESSAGE_TYPE_XXX"
 
 
 class Connection(object):
@@ -34,7 +37,13 @@ class Connection(object):
             self.stream.close()
             return
 
-        self.stream.write("echo: %s\n" % line)
+        try:
+            message = json.loads(line)
+            self.message_received(message)
+        except:
+            logger.error("Could not decode JSON: %s", line)
+
+        # self.stream.write("echo: %s\n" % line)
 
         # Wait for further input on this connection
         self.wait()
@@ -53,6 +62,18 @@ class Connection(object):
         """Build string representation, will be used for working with
         server identity (not only name) in future"""
         return str(self.address)
+
+    def message_received(self, msg):
+        """ msg is a dictionary """
+        logger.info("message_received: %s", msg)
+
+        if "type" not in msg:
+            logger.warn("- message does not have a 'type' property")
+            return
+
+        if msg["type"] == MESSAGE_TYPE_XXX:
+            # do something
+            pass
 
 
 class Server(TCPServer):
