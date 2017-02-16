@@ -13,7 +13,7 @@ from logutils import setup_logger
 import config
 
 
-logger = setup_logger("boilerplate.main")
+logger = setup_logger()
 
 
 def handle_signal(sig, frame):
@@ -42,15 +42,9 @@ def main():
     logger.info('Starting TCP server on port %d', config.TCP_PORT)
     io_loop.server.listen(config.TCP_PORT)
 
-    # # Create the http api server
-    # logger.info('Starting HTTP API interface on port %d', config.MASTER_API_PORT)
-    # io_loop.webapp = api.Application()
-    # io_loop.webapp.listen(config.MASTER_API_PORT)
-
     # main thread blocks here
     io_loop.start()
 
 
 if __name__ == '__main__':
-    # parse_command_line()
     main()
