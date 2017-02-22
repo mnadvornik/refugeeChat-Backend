@@ -26,8 +26,9 @@ Components:
 
 Messages from the client:
 
-    # Initial message after joining (includes crypto_params):
-    { "type": "JOIN", "crypto_params": { "a": 123, "b": 987 } }
+{"type":"JOIN","crypto_params": {"identityString": "XXX","publicKey": "XXX","preKeyList": "XXX","signedPreKeyList": "XXX"}}
 
-    # Send a message to the partner:
-    { "type": "CHAT", "message": "hello" }
+{"type":"SEARCH"}
+
+{"type":"CHAT", "message":  {"internalType": "kexMessage", "message": "xxxx"}}
+{"type":"CHAT", "message":  {"internalType": "encryptedMessage", "message": "xxxx"}}
