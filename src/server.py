@@ -15,6 +15,7 @@ logger = setup_logger()
 
 # Ingoing message types
 MESSAGE_TYPE_JOIN = "JOIN"  # props: crypto_params
+MESSAGE_TYPE_SEARCH = "SEARCH"
 MESSAGE_TYPE_CHAT = "CHAT"  # props: message
 
 # Outgoing message types
@@ -23,6 +24,7 @@ MESSAGE_TYPE_PARTNER_DISCONNECTED = "PARTNER_DISCONNECTED"
 
 # Client states
 STATE_INITIAL = "STATE_INITIAL"
+STATE_JOINED = "STATE_JOINED"
 STATE_SEARCHING = "STATE_SEARCHING"
 STATE_PARTNER_CONNECTED = "STATE_PARTNER_CONNECTED"
 STATE_PARTNER_DISCONNECTED = "STATE_PARTNER_DISCONNECTED"
@@ -95,14 +97,42 @@ class Connection(object):
         if "type" not in msg:
             logger.warn("- message does not have a 'type' property")
             return
+        logger.info("type: %s", msg["type"])
 
         if msg["type"] == MESSAGE_TYPE_JOIN:
-            # joining includes the crypto params and starts partner search
+            logger.info("client joined %r",self.address)
+            if not self.state == STATE_INITIAL:
+                logger.error("already joined")
+                return
+            # joining includes the crypto params
             if not "crypto_params" in msg:
                 logger.error("- JOIN message does not have a 'crypto_params' property")
                 return
 
+            #check for neccessary crypty params
+            if not "identityString" in msg["crypto_params"]:
+                logger.error("- JOIN message does not have a 'identityString' property")
+                return
+            if not "publicKey" in msg["crypto_params"]:
+                logger.error("- JOIN message does not have a 'publicKey' property")
+                return
+            if not "preKeyList" in msg["crypto_params"]:
+                logger.error("- JOIN message does not have a 'preKeyList' property")
+                return
+            if not "signedPreKeyList" in msg["crypto_params"]:
+                logger.error("- JOIN message does not have a 'signedPreKeyList' property")
+                return
+
+            logger.info("client joined",self.address)
             self.crypto_params = msg["crypto_params"]
+            self.state = STATE_JOINED
+            return
+
+        if msg["type"] == MESSAGE_TYPE_SEARCH:
+            if not self.state == STATE_JOINED:
+                logger.error("Client not joined %s", self.address)
+                return
+                
             self.state = STATE_SEARCHING
             self.server.search_for_partners(self)
             return
@@ -153,6 +183,7 @@ class Server(TCPServer):
         logger.info("search_for_partners: initiated by %s. %s clients connected", client.address, len(self.clients))
 
         for address in self.clients:
+            logger.info("looking at address %s with state %s", address, self.clients[address].state)
             # Skip the initiating client
             if self.clients[address].address == client.address:
                 continue
